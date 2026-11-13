@@ -5,8 +5,8 @@
 
 #pragma once
 
-// Replace -1 with the GPIO number wired to the strand's data input.
-constexpr int LED_DATA_PIN = -1;
+// QT Py SAMD21 A1/D1 connects to the external NeoPixel data input.
+constexpr int LED_DATA_PIN = A1;
 constexpr uint16_t LED_COUNT = 50;
 
 struct RgbColor {

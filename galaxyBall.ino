@@ -27,7 +27,12 @@ class GalaxyBall {
 public:
     /** @brief Seed the animation RNG, configure NeoPixel, and enter INIT. */
     void begin() {
-        const uint32_t seed = esp_random();
+        // Leave the selected analog input unconnected for startup noise.
+        constexpr int seedPin = A0;
+        uint32_t seed = micros();
+        for (uint8_t sample = 0; sample < 32; ++sample) {
+            seed = (seed << 1) ^ static_cast<uint32_t>(analogRead(seedPin));
+        }
         randomSeed(seed == 0 ? 1 : seed);
         strip.begin();
         const uint32_t now = millis();

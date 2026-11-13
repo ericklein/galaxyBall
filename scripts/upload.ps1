@@ -1,6 +1,6 @@
 # Upload previously compiled firmware for the sketch above this scripts folder.
 $SKETCH = Split-Path -Path $PSScriptRoot -Parent
-$BOARD = "esp32:esp32:adafruit_qtpy_esp32s3_nopsram"
+$BOARD = "adafruit:samd:adafruit_qtpy_m0"
 $BUILD_ROOT = "C:\arduinobuild"
 
 # Resolve the sketch from the parent of this scripts folder, independent of the working directory.
