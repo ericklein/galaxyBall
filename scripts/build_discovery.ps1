@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
-Build WizardBall with library discovery and stamp its ESP-IDF application descriptor.
+Build GalaxyBall with library discovery and stamp its ESP-IDF application descriptor.
 .EXAMPLE
-.\scripts\build_discovery.ps1 -Version '1.2.3' -ApplicationName 'WizardBall'
+.\scripts\build_discovery.ps1 -Version '1.2.3' -ApplicationName 'GalaxyBall'
 #>
 [CmdletBinding()]
 param(
@@ -11,7 +11,7 @@ param(
     [string]$Version,
 
     [ValidatePattern('^[0-9A-Za-z][0-9A-Za-z .+_-]{0,30}\z')]
-    [string]$ApplicationName = 'WizardBall',
+    [string]$ApplicationName = 'GalaxyBall',
 
     [string]$BuildRoot = 'C:\arduinobuild'
 )

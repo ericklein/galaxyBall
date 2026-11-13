@@ -23,7 +23,7 @@ struct Pixel {
     uint16_t curve;
 };
 
-class WizardBall {
+class GalaxyBall {
 public:
     /** @brief Seed the animation RNG, configure NeoPixel, and enter INIT. */
     void begin() {
@@ -299,7 +299,7 @@ private:
     }
 };
 
-WizardBall ball;
+GalaxyBall ball;
 
 /** @brief Initialize the LED controller once at power-on. */
 void setup() {

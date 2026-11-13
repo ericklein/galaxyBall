@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
-Build and verify the WizardBall application descriptor before uploading.
+Build and verify the GalaxyBall application descriptor before uploading.
 .EXAMPLE
-.\scripts\build_discovery_upload.ps1 -Version '1.2.3' -ApplicationName 'WizardBall'
+.\scripts\build_discovery_upload.ps1 -Version '1.2.3' -ApplicationName 'GalaxyBall'
 #>
 [CmdletBinding()]
 param(
@@ -11,7 +11,7 @@ param(
     [string]$Version,
 
     [ValidatePattern('^[0-9A-Za-z][0-9A-Za-z .+_-]{0,30}\z')]
-    [string]$ApplicationName = 'WizardBall',
+    [string]$ApplicationName = 'GalaxyBall',
 
     [string]$BuildRoot = 'C:\arduinobuild'
 )

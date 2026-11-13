@@ -1,4 +1,4 @@
-# wizardBall
+# galaxyBall
 art project that simulates stellar activity in a glass ball
 
 ## Arduino scripts
@@ -7,10 +7,7 @@ Set the LED data GPIO in config.h first. Use Arduino CLI with the ESP32 board
 package and Adafruit NeoPixel installed in the library collection configured in
 the scripts. The scripts target the Adafruit QT Py ESP32-S3 without PSRAM.
 
-`wizardBall.ino` and `wizardBall_c_style.ino` are alternative sketches. Keep
-only the variant you want to build in the sketch folder, with its `.ino` file
-named to match the folder and a copy of `config.h`. Arduino combines all `.ino`
-files in the folder into one program.
+The Arduino sketch is galaxyBall.ino.
 
 On Windows, run these from the sketch folder:
 
@@ -28,7 +25,7 @@ On Linux, use bash scripts/build.sh or
 bash scripts/build_discovery.sh --version 0.1.0. The discovery script requires
 Python 3 for ESP-IDF application descriptor stamping and verification.
 
-On Windows the default output is `C:\arduinobuild\wizardBall`. The standalone
+On Windows the default output is `C:\arduinobuild\galaxyBall`. The standalone
 upload and memory-map scripts look there by default. On Linux, `build.sh` uses
-`./build`, and `build_discovery.sh` defaults to `~/arduinobuild/wizardBall` and
+`./build`, and `build_discovery.sh` defaults to `~/arduinobuild/galaxyBall` and
 accepts `--build-root` and `--libraries`.

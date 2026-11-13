@@ -13,7 +13,7 @@ $port = $null
 $logWriter = $null
 $sketchPath = Split-Path -Path $PSScriptRoot -Parent
 $logDirectory = Join-Path $sketchPath 'logs'
-$logPath = Join-Path $logDirectory ('wizardBall_{0}.txt' -f (Get-Date -Format 'dd-MM-yy+HH-mm'))
+$logPath = Join-Path $logDirectory ('galaxyBall_{0}.txt' -f (Get-Date -Format 'dd-MM-yy+HH-mm'))
 
 try {
     [System.IO.Directory]::CreateDirectory($logDirectory) | Out-Null

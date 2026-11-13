@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
-Build and verify WizardBall before uploading and starting the serial log.
+Build and verify GalaxyBall before uploading and starting the serial log.
 .EXAMPLE
-.\scripts\build_discovery_upload_log.ps1 -Version '1.2.3' -ApplicationName 'WizardBall'
+.\scripts\build_discovery_upload_log.ps1 -Version '1.2.3' -ApplicationName 'GalaxyBall'
 #>
 [CmdletBinding()]
 param(
@@ -11,7 +11,7 @@ param(
     [string]$Version,
 
     [ValidatePattern('^[0-9A-Za-z][0-9A-Za-z .+_-]{0,30}\z')]
-    [string]$ApplicationName = 'WizardBall',
+    [string]$ApplicationName = 'GalaxyBall',
 
     [string]$BuildRoot = 'C:\arduinobuild'
 )
@@ -113,7 +113,7 @@ if ($LASTEXITCODE -eq 0) {
     $logport = $null
     $logWriter = $null
     $logDirectory = Join-Path $SKETCH_PATH 'logs'
-    $logPath = Join-Path $logDirectory ('wizardBall_{0}.txt' -f (Get-Date -Format 'dd-MM-yy+HH-mm'))
+    $logPath = Join-Path $logDirectory ('galaxyBall_{0}.txt' -f (Get-Date -Format 'dd-MM-yy+HH-mm'))
 
     try {
         [System.IO.Directory]::CreateDirectory($logDirectory) | Out-Null

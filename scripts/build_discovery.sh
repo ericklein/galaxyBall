@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build from <sketch>/scripts, independent of the caller's working directory.
-# Usage: ./scripts/build_discovery.sh --version 1.2.3 [--application-name WizardBall]
+# Usage: ./scripts/build_discovery.sh --version 1.2.3 [--application-name GalaxyBall]
 #        [--build-root /path/to/builds] [--libraries /path/to/libraries]
 set -euo pipefail
 export LC_ALL=C
@@ -9,7 +9,7 @@ usage() {
 }
 die() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 VERSION=''
-APPLICATION_NAME='WizardBall'
+APPLICATION_NAME='GalaxyBall'
 BUILD_ROOT="${BUILD_ROOT:-${HOME:?HOME must be set}/arduinobuild}"
 LIB_PATH="${LIB_PATH:-/run/media/eric/windu/Users/eric/Dropbox/make/arduino/libraries}"
 while (($#)); do
@@ -48,13 +48,13 @@ STAMP_SCRIPT="$SCRIPT_DIR/stamp_app_descriptor.py"
 printf 'Sketch: %s\nBuild:  %s\nApp:    %s %s\n' "$SKETCH_PATH" "$BUILD_DIR" "$APPLICATION_NAME" "$VERSION"
 # Encode arguments to keep paths, spaces and quotes out of the recipe parser.
 # The helper receives ELF, version and name through this inherited environment.
-export WIZARDBALL_DESCRIPTOR_CONFIG
-WIZARDBALL_DESCRIPTOR_CONFIG=$(python3 - "$STAMP_SCRIPT" "$ELF_PATH" "$VERSION" "$APPLICATION_NAME" <<'PY'
+export GALAXYBALL_DESCRIPTOR_CONFIG
+GALAXYBALL_DESCRIPTOR_CONFIG=$(python3 - "$STAMP_SCRIPT" "$ELF_PATH" "$VERSION" "$APPLICATION_NAME" <<'PY'
 import base64, json, sys
 print(base64.b64encode(json.dumps(sys.argv[1:]).encode()).decode())
 PY
 )
-DESCRIPTOR_HOOK="recipe.hooks.linking.postlink.90.pattern=python3 -c \"import base64,json,os,runpy,sys; a=json.loads(base64.b64decode(os.environ['WIZARDBALL_DESCRIPTOR_CONFIG'])); sys.argv=[a[0],'stamp']+a[1:]; runpy.run_path(a[0],run_name='__main__')\""
+DESCRIPTOR_HOOK="recipe.hooks.linking.postlink.90.pattern=python3 -c \"import base64,json,os,runpy,sys; a=json.loads(base64.b64decode(os.environ['GALAXYBALL_DESCRIPTOR_CONFIG'])); sys.argv=[a[0],'stamp']+a[1:]; runpy.run_path(a[0],run_name='__main__')\""
 # Delete only the ELF so metadata-only changes force linking, retaining objects.
 rm -f -- "$ELF_PATH"
 printf '%s\n' '--- Starting Linux Compile with library discovery ---'

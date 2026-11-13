@@ -1,5 +1,5 @@
 # Analyze Arduino / ESP32 linker map file to show allocated memory usage by library.
-# Usage: .\analyze_memory_map.ps1 [-MapFile C:\arduinobuild\wizardBall\output.map] [-Top 0] [-Csv out.csv]
+# Usage: .\analyze_memory_map.ps1 [-MapFile C:\arduinobuild\galaxyBall\output.map] [-Top 0] [-Csv out.csv]
 #
 # Notes:
 # - This parses the real "Linker script and memory map" section, not the earlier
