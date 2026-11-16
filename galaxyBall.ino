@@ -10,17 +10,21 @@
 
 const RgbColor STELLAR_COLORS[] = {
     {155, 176, 255}, {170, 191, 255}, {202, 215, 255},
-    {248, 247, 255}, {255, 244, 234}, {255, 210, 161},
-    {255, 204, 111},
+    {248, 247, 255}, {255, 224, 64}, {255, 128, 24},
+    {255, 48, 12},
 };
+
+constexpr uint32_t SUPERNOVA_WHITE = 0xFFFFFF;
 
 enum class Phase { Init, Warble, Supernova, BlackHole };
 
 struct Pixel {
     RgbColor color;
     uint8_t base;
-    int16_t change;
-    uint16_t curve;
+    int16_t flickerAmplitude;
+    uint16_t flickerDuration;
+    uint32_t flickerStarted;
+    bool flickerBrightens;
 };
 
 class GalaxyBall {
@@ -58,7 +62,8 @@ public:
 private:
     Phase phase = Phase::Init;
     Pixel pixels[LED_COUNT] = {};
-    Adafruit_NeoPixel strip{LED_COUNT, LED_DATA_PIN, NEO_GRB + NEO_KHZ800};
+    // The installed strand uses BGR wire order, confirmed by a primary-color test.
+    Adafruit_NeoPixel strip{LED_COUNT, LED_DATA_PIN, NEO_BGR + NEO_KHZ800};
     uint16_t order[LED_COUNT];
     uint32_t phaseStarted = 0;
     uint32_t lastFrame = 0;
@@ -69,6 +74,7 @@ private:
     uint32_t nextWaveStep = 0;
     uint32_t holdStarted = 0;
     uint32_t lastCollapseStep = 0;
+    uint32_t blackoutStarted = 0;
 
     /** @return A uniformly selected color from the fixed stellar palette. */
     RgbColor pickColor() {
@@ -88,27 +94,26 @@ private:
         }
     }
 
-    /** @brief Assign fresh colors, base brightnesses, and independent modulation groups. */
+    /** @brief Assign base brightnesses and independent modulation groups. */
     void configureWarble() {
         warbleDuration = random(WARBLE_MIN_MS, WARBLE_MAX_MS + 1);
-        constexpr unsigned lowEnd = LED_COUNT * LOW_PERCENT / 100;
-        constexpr unsigned mediumEnd = lowEnd + LED_COUNT * MEDIUM_PERCENT / 100;
-        constexpr unsigned highEnd = mediumEnd + LED_COUNT * HIGH_PERCENT / 100;
-        constexpr unsigned staticEnd = LED_COUNT * STATIC_PERCENT / 100;
-        constexpr unsigned slowEnd = staticEnd + LED_COUNT * SLOW_PERCENT / 100;
+        constexpr unsigned lowEnd = LED_COUNT * LOW_INITIAL_BRIGHTNESS_PERCENT / 100;
+        constexpr unsigned mediumEnd = lowEnd + LED_COUNT * MEDIUM_INITIAL_BRIGHTNESS_PERCENT / 100;
+        constexpr unsigned highEnd = mediumEnd + LED_COUNT * HIGH_INITIAL_BRIGHTNESS_PERCENT / 100;
+        constexpr unsigned staticEnd = LED_COUNT * STATIC_FLICKER_PERCENT / 100;
+        constexpr unsigned subtleEnd = staticEnd + LED_COUNT * SUBTLE_FLICKER_PERCENT / 100;
 
         shuffleOrder();
         for (uint16_t rank = 0; rank < LED_COUNT; ++rank) {
             Pixel& pixel = pixels[order[rank]];
-            pixel.color = pickColor();
             if (rank < lowEnd) {
-                pixel.base = random(0, 51);
+                pixel.base = random(MIN_STAR_BRIGHTNESS, 86);
             } else if (rank < mediumEnd) {
-                pixel.base = random(50, 126);
+                pixel.base = random(86, 141);
             } else if (rank < highEnd) {
-                pixel.base = random(125, 201);
+                pixel.base = random(141, 201);
             } else {
-                pixel.base = random(200, 256);
+                pixel.base = random(201, MAX_STAR_BRIGHTNESS + 1);
             }
         }
 
@@ -116,10 +121,12 @@ private:
         for (uint16_t rank = 0; rank < LED_COUNT; ++rank) {
             Pixel& pixel = pixels[order[rank]];
             if (rank < staticEnd) {
-                pixel.change = 0;
+                pixel.flickerAmplitude = 0;
             } else {
-                const int16_t amount = rank < slowEnd ? random(25, 51) : random(50, 101);
-                pixel.change = random(2) == 0 ? -amount : amount;
+                pixel.flickerAmplitude = rank < subtleEnd ? random(25, 36) : random(30, 51);
+                pixel.flickerDuration = random(WARBLE_FLICKER_MIN_MS, WARBLE_FLICKER_MAX_MS + 1);
+                pixel.flickerStarted = 0U - static_cast<uint32_t>(random(pixel.flickerDuration));
+                pixel.flickerBrightens = random(2) == 0;
             }
         }
     }
@@ -127,10 +134,10 @@ private:
     /**
      * @brief Clamp brightness and write a scaled palette color into the frame.
      * @param index LED to update.
-     * @param value Brightness before clamping to 0–255.
+     * @param value Brightness before clamping.
      */
     void paint(uint16_t index, int32_t value) {
-        const uint32_t brightness = constrain(value, 0, 255);
+        const uint32_t brightness = constrain(value, MIN_STAR_BRIGHTNESS, MAX_STAR_BRIGHTNESS);
         const RgbColor& color = pixels[index].color;
         strip.setPixelColor(index,
                             color.r * brightness / 255,
@@ -139,16 +146,26 @@ private:
     }
 
     /**
-     * @brief Render smooth ramps from base to target and back using integer smoothstep.
+     * @brief Render staggered flickers around each pixel's base brightness.
      * @param elapsed Milliseconds since WARBLE began.
      */
     void renderWarble(uint32_t elapsed) {
-        const uint32_t cycle = elapsed % (2 * WARBLE_RAMP_MS);
-        const uint32_t leg = cycle <= WARBLE_RAMP_MS ? cycle : 2 * WARBLE_RAMP_MS - cycle;
-        const int32_t x = leg * RAMP_SCALE / WARBLE_RAMP_MS;
-        const int32_t blend = x * x * (3 * RAMP_SCALE - 2 * x) / (RAMP_SCALE * RAMP_SCALE);
         for (uint16_t i = 0; i < LED_COUNT; ++i) {
-            paint(i, pixels[i].base + pixels[i].change * blend / RAMP_SCALE);
+            Pixel& pixel = pixels[i];
+            int32_t brightness = pixel.base;
+            if (pixel.flickerAmplitude != 0) {
+                if (elapsed - pixel.flickerStarted >= pixel.flickerDuration) {
+                    pixel.flickerStarted = elapsed;
+                    pixel.flickerDuration = random(WARBLE_FLICKER_MIN_MS, WARBLE_FLICKER_MAX_MS + 1);
+                    pixel.flickerBrightens = random(2) == 0;
+                }
+                const int32_t duration = pixel.flickerDuration;
+                const int32_t offset = elapsed - pixel.flickerStarted;
+                const int32_t ramp = min(offset, duration - offset);
+                const int32_t change = 2 * ramp * pixel.flickerAmplitude / duration;
+                brightness += pixel.flickerBrightens ? change : -change;
+            }
+            paint(i, brightness);
         }
     }
 
@@ -171,14 +188,10 @@ private:
                 finalRadius = origin > right ? origin : right;
                 nextWaveStep = FIRST_WAVE_DELAY_MS;
                 holdStarted = 0;
-                paint(origin, 255);
+                strip.setPixelColor(origin, SUPERNOVA_WHITE);
                 break;
             }
             case Phase::BlackHole:
-                shuffleOrder();
-                for (uint16_t rank = 0; rank < LED_COUNT; ++rank) {
-                    pixels[order[rank]].curve = rank;
-                }
                 lastCollapseStep = 0;
                 break;
         }
@@ -198,6 +211,11 @@ private:
      */
     void transition(Phase next, uint32_t now) {
         onExit();
+        if (phase == Phase::BlackHole && next == Phase::Warble) {
+            for (Pixel& pixel : pixels) {
+                pixel.color = pickColor();
+            }
+        }
         phase = next;
         phaseStarted = now;
         onEnter();
@@ -217,10 +235,9 @@ private:
                     break;
                 }
                 const uint32_t offset = elapsed % INIT_LED_DURATION_MS;
-                const uint32_t half = INIT_LED_DURATION_MS / 2;
-                const uint32_t ramp = offset <= half ? offset : INIT_LED_DURATION_MS - offset;
+                const uint32_t ramp = min(offset, INIT_LED_DURATION_MS - offset);
                 strip.clear();
-                paint(index, uint64_t(ramp) * 255 / half);
+                paint(index, MIN_STAR_BRIGHTNESS + ramp * (MAX_STAR_BRIGHTNESS - MIN_STAR_BRIGHTNESS) / INIT_FADE_MS);
                 break;
             }
             case Phase::Warble:
@@ -256,28 +273,34 @@ private:
         while (radius < finalRadius && elapsed >= nextWaveStep) {
             ++radius;
             if (radius <= origin) {
-                paint(origin - radius, 255);
+                strip.setPixelColor(origin - radius, SUPERNOVA_WHITE);
             }
             if (origin + radius < LED_COUNT) {
-                paint(origin + radius, 255);
+                strip.setPixelColor(origin + radius, SUPERNOVA_WHITE);
             }
             if (radius == finalRadius) {
                 holdStarted = now;
             } else {
-                nextWaveStep += FIRST_WAVE_DELAY_MS -
-                    (FIRST_WAVE_DELAY_MS - LAST_WAVE_DELAY_MS) * radius / (finalRadius - 1);
+                const uint32_t intervals = finalRadius - 1;
+                const uint32_t remaining = intervals - radius;
+                // Square the remaining fraction to bring the shorter delays in sooner.
+                nextWaveStep += LAST_WAVE_DELAY_MS +
+                    (FIRST_WAVE_DELAY_MS - LAST_WAVE_DELAY_MS) * remaining * remaining /
+                    (intervals * intervals);
             }
         }
     }
 
     /**
-     * @brief Fade along distinct monotonic curves and send a dark frame before restarting.
+     * @brief Fade all pixels together from full white to black, then hold the blackout.
      * @param elapsed Milliseconds since BLACK_HOLE began.
      * @param now Current millis() timestamp.
      */
     void updateBlackHole(uint32_t elapsed, uint32_t now) {
         if (lastCollapseStep == COLLAPSE_STEPS) {
-            transition(Phase::Warble, now);
+            if (now - blackoutStarted >= BLACKOUT_MS) {
+                transition(Phase::Warble, now);
+            }
             return;
         }
         uint32_t step = elapsed / COLLAPSE_STEP_MS;
@@ -288,19 +311,13 @@ private:
             step = COLLAPSE_STEPS;
         }
 
-        // Blend quadratic ease-in and ease-out with a different weight per pixel.
-        // Round up so every pixel stays lit until the shared zero endpoint.
-        constexpr uint32_t maxWeight = LED_COUNT - 1;
-        constexpr uint32_t divisor = COLLAPSE_STEPS * COLLAPSE_STEPS * maxWeight;
         const uint32_t remaining = COLLAPSE_STEPS - step;
-        const uint32_t fast = remaining * remaining;
-        const uint32_t slow = remaining * (2 * COLLAPSE_STEPS - remaining);
-        for (uint16_t i = 0; i < LED_COUNT; ++i) {
-            const uint32_t weight = pixels[i].curve;
-            const uint32_t level = fast * (maxWeight - weight) + slow * weight;
-            paint(i, (255 * level + divisor - 1) / divisor);
-        }
+        const uint8_t brightness = 255 * remaining / COLLAPSE_STEPS;
+        strip.fill(strip.Color(brightness, brightness, brightness));
         lastCollapseStep = step;
+        if (step == COLLAPSE_STEPS) {
+            blackoutStarted = now;
+        }
     }
 };
 
