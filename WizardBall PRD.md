@@ -6,10 +6,39 @@ WizardBall is a glass ball containing 50 RGB NeoPixels on a flexible wire. The L
 
 ## Hardware and configuration
 
-### BOM
-- Adafruit QT Py SAMD21, part 4600 (https://www.adafruit.com/product/4600).
-- Adafruit Soft Flexible Wire NeoPixel Strand - 50 NeoPixels (https://www.adafruit.com/product/4560)
-- 5V, 4A power supply
+### Enclosure BOM
+
+| Qty | Part | Source | Notes |
+| --- | --- | --- | --- |
+| 1 | Adafruit QT Py SAMD21, part 4600 | On hand | Mount on the Perma-Proto with its USB-C socket facing the cable approach. [Adafruit](https://www.adafruit.com/product/4600) |
+| 1 | Adafruit Soft Flexible Wire NeoPixel Strand, 50 RGB pixels, part 4560 | On hand | Sits outside the enclosure. [Adafruit](https://www.adafruit.com/product/4560) |
+| 1 | 5 V DC, 4 A adapter with 2.1 mm barrel plug | On hand | Confirm polarity and plug fit before connecting. |
+| 1 | Adafruit 1609 half-size Perma-Proto PCB, 81 × 51 mm | On hand | Holds the QT Py and wiring. [Adafruit](https://www.adafruit.com/product/1609) |
+| 1 | BY500-600 silicon diode | On hand | Series diode on the QT Py power branch. Gray band toward QT Py 5V. |
+| 1 | 470 Ω resistor | On hand | Measured 469 Ω. Install in series between A1 and the first pixel DIN, near DIN where practical. |
+| 1 | Polarized bulk capacitor | On hand | Verify 500–1,000 µF and at least 6.3 V. Install across switched LED +5 V and GND, negative stripe toward GND. |
+| 1 | 3-pin JST-SM mating pigtail | On hand | LED power, data, and ground. The 4 mm wire bundle exits through the grommet with the connector outside. |
+| 1 | Hammond 1591XXGBK black ABS enclosure | [DigiKey HM2041-ND](https://www.digikey.com/en/products/detail/hammond-manufacturing/1591XXGBK/2357885) | 122.45 × 95.91 × 38 mm externally. |
+| 1 | Switchcraft 721A panel-mount barrel jack | [DigiKey SC3508-ND](https://www.digikey.com/en/products/detail/switchcraft-inc/721A/8571716) | 5.5 × 2.1 mm, 5 A, solder lugs. Nominal 8 mm mounting hole. |
+| 1 | CW Industries GRB112A802BB round rocker | [DigiKey CW102-ND](https://www.digikey.com/en/products/detail/cw-industries/GRB112A802BB/2349682) | Preferred lid switch. Unlit SPST on/off, 10 A at 28 V DC, 4.7 mm tabs, 20.2 mm round cutout. Check clip fit before drilling. |
+| 1 | NKK S1A toggle | [DigiKey 360-2893-ND](https://www.digikey.com/en/products/detail/nkk-switches/S1A/1049381) | Alternate lid switch included in the cart. Solder lugs and 12.5 mm clearance hole. Install one switch. |
+| 1 | Adafruit 4218 panel-mount USB-C data extension | [DigiKey 1528-4218-ND](https://www.digikey.com/en/products/detail/adafruit-industries-llc/4218/10244657) | 30 cm. Outside receptacle for programming, inside plug to QT Py. Minimum 21.5 mm hole and approximately 29.5 mm nut clearance. |
+| 1 | Essentra 498074 rubber grommet | [DigiKey 2082-498074-ND](https://www.digikey.com/en/products/detail/essentra-access-solutions/498074/26982837) | 8 mm panel hole, 6 mm wire opening, nominal 2 mm panel thickness. |
+| 1 | Panduit TM1S4-M screw-down cable tie mount | [DigiKey 298-15887-ND](https://www.digikey.com/en/products/detail/panduit-corp/TM1S4-M/4569098) | Anchor the LED wire bundle just inside the cable exit. |
+| 1 | 2.5 mm-wide miniature cable tie | Bench stock or source separately | Use with the Panduit mount. The PLT1M-M0 listing required multiples of 1,000 and was omitted from the cart. |
+| As needed | Two 1×7 headers, PCB standoffs and fasteners, #4 or M2.5 tie-mount screw, insulated hookup wire, and heat-shrink | Verify bench stock | Size power wiring for the LED load. |
+
+The DigiKey entries were verified in the cart. Checkout status is unconfirmed.
+
+### Enclosure wiring and layout
+
+- Put the switch on the lid and use three separate walls for **5 V IN**, **USB-C**, and **LED OUT**. Dry-fit the USB-C nut, cable bend, switch terminals, protoboard on standoffs, and capacitor before drilling.
+- Route barrel jack +5 V through the lid switch, then split it at the protoboard. Feed the LED strand directly from switched +5 V and feed QT Py 5V through the BY500-600. The QT Py 5V header pin and underside 5V pad share the same net.
+- Connect adapter, QT Py, and LED grounds at the common ground tie point. Route A1 through the 470 Ω resistor to the first pixel DIN. Verify the pigtail pinout against the installed strand before soldering.
+- Label the switch **5 V IN**. USB-C can still power the QT Py with the switch off.
+
+### Firmware configuration
+
 
 - Create an Arduino-compatible sketch targeting the Adafruit QT Py SAMD21.
 - Use Adafruit NeoPixel library to control the LEDS. No specific version of this library is required.
